@@ -1,0 +1,26 @@
+# Dependencies
+node_modules/
+client/node_modules/
+server/node_modules/
+
+# Environment files — never commit secrets
+.env
+client/.env
+server/.env
+
+# Build output
+client/dist/
+client/.vite/
+
+# Logs
+*.log
+.agent_logs/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# doc
+workflow.md

@@ -350,18 +350,24 @@ All endpoints are prefixed with `/api`.
 
 ## Deployment
 
-Everything can be deployed on [Render](https://render.com) — no third-party platform needed. The stack maps naturally to three Render resources: a managed PostgreSQL database, a Docker web service for the backend, and a Docker web service (Nginx) for the frontend.
+The backend and frontend are deployed on [Render](https://render.com) as Docker web services. The database is hosted on [Supabase](https://supabase.com) (free tier). This combination avoids Render's paid database plans while keeping everything simple.
 
-### Step 1 — PostgreSQL database
+### Step 1 — PostgreSQL database (Supabase)
 
-1. In the Render dashboard, go to **New → PostgreSQL**
-2. Choose a name (e.g. `web-analyser-db`) and the free or starter plan
-3. Once created, copy the **Internal Database URL** — you will need it in Step 2
+1. Create a free account on [supabase.com](https://supabase.com) and create a new project
+2. Once the project is ready, click the **Connect** button at the top of the dashboard
+3. Go to the **ORM** tab and copy the `DATABASE_URL` (Transaction pooler, port `6543`) — it looks like:
+   ```
+   postgresql://postgres.[ref]:[password]@aws-1-[region].pooler.supabase.com:6543/postgres?pgbouncer=true
+   ```
+4. Keep this URL — you will need it in Step 2
+
+> **Important**: Use the **Transaction pooler** URL (port `6543`), not the direct connection URL. The direct connection uses IPv6 which is not supported on Render's free tier.
 
 ### Step 2 — Backend (Express API)
 
-1. Go to **New → Web Service**
-2. Connect your repository
+1. In Render, go to **New → Web Service**
+2. Connect your GitHub repository
 3. Set the following options:
 
    | Setting | Value |
@@ -375,7 +381,7 @@ Everything can be deployed on [Render](https://render.com) — no third-party pl
    | Variable | Value |
    |---|---|
    | `ANTHROPIC_API_KEY` | Your Claude key — or use `GEMINI_API_KEY` |
-   | `DATABASE_URL` | Internal Database URL from Step 1 |
+   | `DATABASE_URL` | Supabase Transaction pooler URL from Step 1 |
    | `JWT_SECRET` | Run `openssl rand -base64 32` to generate one |
    | `ALLOWED_ORIGINS` | Your frontend Render URL (fill in after Step 3) |
    | `PORT` | `3001` |
@@ -384,10 +390,8 @@ Everything can be deployed on [Render](https://render.com) — no third-party pl
 
 ### Step 3 — Frontend (React + Nginx)
 
-The client Dockerfile builds the React app and serves it through Nginx, which also proxies `/api` requests to the backend — so the frontend and backend can live on different Render URLs with no CORS issues.
-
-1. Go to **New → Web Service**
-2. Connect your repository
+1. In Render, go to **New → Web Service**
+2. Connect your GitHub repository
 3. Set the following options:
 
    | Setting | Value |
@@ -396,33 +400,27 @@ The client Dockerfile builds the React app and serves it through Nginx, which al
    | **Environment** | Docker |
    | **Dockerfile path** | `./Dockerfile` |
 
-4. Add build argument:
+4. Add environment variable:
 
-   | Argument | Value |
+   | Variable | Value |
    |---|---|
-   | `VITE_API_URL` | Leave empty — Nginx handles `/api` proxying internally |
+   | `VITE_API_URL` | Your backend Render URL (e.g. `https://web-analyser-server.onrender.com`) |
 
-5. Deploy. Once live, copy the frontend URL (e.g. `https://web-analyser.onrender.com`).
+5. Deploy. Once live, copy the frontend URL (e.g. `https://web-analyser-client.onrender.com`).
 
 ### Step 4 — Wire CORS
 
-Go back to the **backend** service on Render, update the `ALLOWED_ORIGINS` variable with your frontend URL, and redeploy:
+Go back to the **backend** service on Render, update `ALLOWED_ORIGINS` with your frontend URL, and redeploy:
 
 ```
-ALLOWED_ORIGINS=https://web-analyser.onrender.com
+ALLOWED_ORIGINS=https://web-analyser-client.onrender.com
 ```
-
-> **Note on Nginx proxying**: `client/nginx.conf` is configured to proxy `/api/*` requests to the `server` container by hostname. On Render, the two services are not on the same Docker network, so you need to update `nginx.conf` to point to the public backend URL before deploying:
->
-> ```nginx
-> location /api/ {
->     proxy_pass https://your-api-service.onrender.com/api/;
-> }
-> ```
 
 ### Free tier considerations
 
-Render's free tier spins down web services after 15 minutes of inactivity. The first request after a cold start may take 30–60 seconds. For a production deployment, use a paid instance or set up a simple uptime pinger (e.g. UptimeRobot pinging `/api/health` every 10 minutes).
+Render's free tier spins down web services after 15 minutes of inactivity. The first request after a cold start may take 30–60 seconds. For a production deployment, use a paid instance or set up an uptime pinger (e.g. UptimeRobot pinging the backend URL every 10 minutes).
+
+Supabase free tier includes 500 MB of database storage and pauses projects after 1 week of inactivity — reactivate from the Supabase dashboard if needed.
 
 ---
 

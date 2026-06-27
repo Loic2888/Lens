@@ -183,10 +183,12 @@ body {
 .detected-via { color: #999; font-size: 0.8rem; }
 
 .pill-group { display: flex; flex-wrap: wrap; gap: 0.35rem; }
-.pill { padding: 0.25rem 0.6rem; border-radius: 999px; font-size: 0.8rem; font-weight: 500; max-width: 220px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pill { padding: 0.25rem 0.6rem; border-radius: 999px; font-size: 0.8rem; font-weight: 500; }
 .pill-active { background: #cc532b; color: #fff; }
 .pill-inactive { background: #f5f5ec; color: #999; border: 1px solid #deddce; }
 .empty { color: #999; font-size: 0.875rem; }
+.tech-text-list { display: flex; flex-direction: column; gap: 0.2rem; }
+.tech-text-item { font-size: 0.85rem; font-weight: 500; color: #a83d1c; }
 
 .gtm-grid { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.75rem; }
 .open-roles { color: #745452; font-size: 0.875rem; margin-top: 0.5rem; }

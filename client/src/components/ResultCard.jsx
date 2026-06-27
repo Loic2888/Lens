@@ -14,6 +14,15 @@ function TechPills({ items }) {
   )
 }
 
+function TechText({ items }) {
+  if (!items?.length) return <span className="empty">—</span>
+  return (
+    <div className="tech-text-list">
+      {items.map((t, i) => <span key={i} className="tech-text-item">{t}</span>)}
+    </div>
+  )
+}
+
 const GTM_LABELS = {
   has_pricing_page: 'Page tarifs',
   has_careers_page: 'Page carrières',
@@ -77,7 +86,7 @@ export default function ResultCard({ result }) {
           <div><span className="field-label">Frontend</span><TechPills items={tech_stack?.frontend} /></div>
           <div><span className="field-label">Analytics</span><TechPills items={tech_stack?.analytics} /></div>
           <div><span className="field-label">Marketing</span><TechPills items={tech_stack?.marketing} /></div>
-          <div><span className="field-label">Infrastructure</span><TechPills items={tech_stack?.infrastructure} /></div>
+          <div><span className="field-label">Infrastructure</span><TechText items={tech_stack?.infrastructure} /></div>
         </div>
         {tech_stack?.detected_via && (
           <p className="detected-via">Détecté via : {tech_stack.detected_via}</p>

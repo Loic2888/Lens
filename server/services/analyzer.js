@@ -47,8 +47,7 @@ Rules:
 - Use null for any field that cannot be determined from the signals.
 - For estimated_size, use one of: "TPE/PME (1-50 employés)", "Mid-market (50-500 employés)", "Grande entreprise (500-1000 employés)", "Très grande entreprise (1000+ employés)".
 - For business_model, indicate if B2B, B2C, or mixed, written in French (e.g. "B2B SaaS", "B2C", "Mixte B2B/B2C").
-- The rationale must explain the B2B SaaS fit in 1-2 sentences in French based on the signals.
-- For tech_stack arrays (frontend, analytics, marketing, infrastructure): each item must be a SHORT readable label (max 30 characters). Use the technology name only — never include domain lists, URLs, or parenthetical details. For example: "CDN propriétaire" not "CDN (b.stripecdn.com, q.stripe.com, ...)".`
+- The rationale must explain the B2B SaaS fit in 1-2 sentences in French based on the signals.`
 
 // Detect provider at startup — Claude takes priority over Gemini
 const PROVIDER = process.env.ANTHROPIC_API_KEY ? 'anthropic'

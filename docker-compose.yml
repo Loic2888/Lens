@@ -1,0 +1,46 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: konsole
+      POSTGRES_USER: konsole
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U konsole -d konsole"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  server:
+    build:
+      context: ./server
+    environment:
+      PORT: "3001"
+      ANTHROPIC_API_KEY: "${ANTHROPIC_API_KEY}"
+      GEMINI_API_KEY: "${GEMINI_API_KEY}"
+      ALLOWED_ORIGINS: "http://localhost,http://localhost:8080"
+      DATABASE_URL: "postgresql://konsole:${POSTGRES_PASSWORD}@db:5432/konsole"
+      JWT_SECRET: "${JWT_SECRET}"
+    depends_on:
+      db:
+        condition: service_healthy
+    expose:
+      - "3001"
+    restart: unless-stopped
+
+  client:
+    build:
+      context: ./client
+      args:
+        VITE_API_URL: ""
+    ports:
+      - "8080:80"
+    depends_on:
+      - server
+    restart: unless-stopped
+
+volumes:
+  pgdata:

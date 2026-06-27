@@ -46,7 +46,7 @@ export default function ScoreGauge({ score }) {
       <div className="score-signals">
         {signals_positive?.length > 0 && (
           <div className="signals-col">
-            <h4>Positive signals</h4>
+            <h4>Signaux positifs</h4>
             <ul>
               {signals_positive.map((s, i) => (
                 <li key={i}><span className="signal-icon">✅</span> {s}</li>
@@ -56,7 +56,7 @@ export default function ScoreGauge({ score }) {
         )}
         {signals_negative?.length > 0 && (
           <div className="signals-col">
-            <h4>Watch out</h4>
+            <h4>Points de vigilance</h4>
             <ul>
               {signals_negative.map((s, i) => (
                 <li key={i}><span className="signal-icon">⚠️</span> {s}</li>

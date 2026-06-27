@@ -19,8 +19,8 @@ export default function Loader({ url }) {
   return (
     <div className="loader">
       <div className="spinner" />
-      <p className="loader-text">Analyzing <strong>{displayUrl}</strong>…</p>
-      <p className="loader-sub">Scraping signals · Running AI analysis · Computing fit score</p>
+      <p className="loader-text">Analyse de <strong>{displayUrl}</strong>…</p>
+      <p className="loader-sub">Collecte des signaux · Analyse IA · Calcul du score</p>
     </div>
   )
 }

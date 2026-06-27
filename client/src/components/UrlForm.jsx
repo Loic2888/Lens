@@ -30,11 +30,11 @@ export default function UrlForm({ onSubmit, loading }) {
     e.preventDefault()
     const trimmed = url.trim()
     if (!trimmed) {
-      setError('Please enter a URL')
+      setError('Veuillez saisir une URL')
       return
     }
     if (trimmed.includes(' ')) {
-      setError('URL cannot contain spaces')
+      setError("L'URL ne peut pas contenir d'espaces")
       return
     }
     setError('')
@@ -44,17 +44,20 @@ export default function UrlForm({ onSubmit, loading }) {
   return (
     <form className="url-form" onSubmit={handleSubmit}>
       <div className="url-input-row">
-        <input
-          type="text"
-          className="url-input"
-          placeholder="e.g. stripe.com"
-          value={url}
-          onChange={(e) => setUrl(e.target.value)}
-          disabled={loading}
-          aria-label="Company website URL"
-        />
+        <div className="url-input-wrapper">
+          <img src="/logoLoupe-sans-fond.png" alt="" className="url-input-icon" />
+          <input
+            type="text"
+            className="url-input"
+            placeholder="ex : stripe.com"
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+            disabled={loading}
+            aria-label="Company website URL"
+          />
+        </div>
         <button type="submit" className="analyze-btn" disabled={loading}>
-          {loading ? 'Analyzing…' : 'Analyze'}
+          {loading ? 'Analyse en cours…' : 'Analyser'}
         </button>
       </div>
       {error && <p className="form-error">{error}</p>}

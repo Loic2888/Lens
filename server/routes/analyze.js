@@ -1,31 +1,16 @@
-/**
- * server/routes/analyze.js
- *
- * Defines the POST /api/analyze route — the single entry point for the full
- * analysis pipeline. Input validation and URL normalization happen here; all
- * business logic is delegated to the service layer. Error codes produced by
- * services are mapped to appropriate HTTP status codes before responding so
- * stack traces never leak to callers in production.
- */
 import { Router } from 'express'
 import { normalizeUrl, validateUrl } from '../utils/urlHelper.js'
 import { scrape } from '../services/scraper.js'
-import { analyze } from '../services/analyzer.js'
+import { analyze, getActiveModel } from '../services/analyzer.js'
 import { score } from '../services/scorer.js'
 import { logger } from '../utils/logger.js'
+import { optionalAuth } from '../middleware/requireAuth.js'
+import { pool } from '../db/index.js'
 
 export const analyzeRouter = Router()
 
-/**
- * POST /api/analyze
- *
- * Accepts a JSON body with a "url" string, runs it through the scraper,
- * Claude analyzer, and deterministic scorer in sequence, then returns the
- * assembled intelligence object. Responds 400 if the URL is missing or the
- * target site is unreachable, and 500 for unexpected pipeline failures.
- */
-analyzeRouter.post('/analyze', async (req, res) => {
-  const { url } = req.body
+analyzeRouter.post('/analyze', optionalAuth, async (req, res) => {
+  const { url, weights } = req.body
 
   if (!url || typeof url !== 'string' || !url.trim()) {
     return res.status(400).json({ error: 'Invalid or unreachable URL' })
@@ -46,7 +31,7 @@ analyzeRouter.post('/analyze', async (req, res) => {
 
     const rawSignals = await scrape(url)
     const analysis = await analyze(rawSignals, domain)
-    const scoreResult = score(analysis)
+    const scoreResult = score(analysis, weights)
 
     const result = {
       company: {
@@ -59,13 +44,7 @@ analyzeRouter.post('/analyze', async (req, res) => {
         founded_signal: analysis.company?.founded_signal ?? null,
         hq_signal: analysis.company?.hq_signal ?? null
       },
-      tech_stack: analysis.tech_stack ?? {
-        frontend: [],
-        analytics: [],
-        marketing: [],
-        infrastructure: [],
-        detected_via: null
-      },
+      tech_stack: analysis.tech_stack ?? { frontend: [], analytics: [], marketing: [], infrastructure: [], detected_via: null },
       gtm_signals: analysis.gtm_signals ?? {},
       score: {
         value: scoreResult.value,
@@ -77,19 +56,33 @@ analyzeRouter.post('/analyze', async (req, res) => {
       meta: {
         scraped_at: new Date().toISOString(),
         scrape_method: 'direct_fetch',
-        analysis_model: 'gemini-2.5-flash'
+        analysis_model: getActiveModel()
       }
     }
 
+    let analysisId = null
+    if (req.user) {
+      const { rows } = await pool.query(
+        'INSERT INTO analyses (user_id, domain, url, result) VALUES ($1, $2, $3, $4) RETURNING id',
+        [req.user.userId, domain, normalized, JSON.stringify(result)]
+      )
+      analysisId = rows[0].id
+    }
+
     logger.info('Analysis complete', { domain, score: scoreResult.value })
-    res.json(result)
+    res.json({ ...result, id: analysisId })
   } catch (err) {
     logger.error('Analysis pipeline failed', { domain, code: err.code, detail: err.detail })
 
     if (err.code === 'SCRAPE_FAILED') {
-      return res.status(400).json({ error: 'Invalid or unreachable URL', detail: process.env.NODE_ENV !== 'production' ? err.detail : undefined })
+      return res.status(400).json({ error: 'Invalid or unreachable URL' })
     }
 
-    res.status(500).json({ error: 'Analysis failed', detail: process.env.NODE_ENV !== 'production' ? err.detail : undefined })
+    const isOverloaded = err.detail && (err.detail.includes('503') || err.detail.includes('high demand') || err.detail.includes('overloaded'))
+    res.status(500).json({
+      error: isOverloaded
+        ? 'The AI model is temporarily overloaded. Please try again in a few seconds.'
+        : 'Analysis failed'
+    })
   }
 })

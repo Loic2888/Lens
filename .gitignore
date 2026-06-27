@@ -7,6 +7,7 @@ server/node_modules/
 .env
 client/.env
 server/.env
+.env.local
 
 # Build output
 client/dist/

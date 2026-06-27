@@ -79,6 +79,7 @@ async function analyzeWithClaude(userMessage) {
       const response = await anthropic.messages.create({
         model: 'claude-sonnet-4-6',
         max_tokens: 4096,
+        temperature: 0,
         system: SYSTEM_PROMPT,
         messages: [{ role: 'user', content: userMessage }]
       })
@@ -107,7 +108,8 @@ const genAI = PROVIDER === 'gemini'
 async function analyzeWithGemini(userMessage) {
   const model = genAI.getGenerativeModel({
     model: 'gemini-2.5-flash',
-    systemInstruction: SYSTEM_PROMPT
+    systemInstruction: SYSTEM_PROMPT,
+    generationConfig: { temperature: 0 }
   })
 
   for (let attempt = 1; attempt <= 3; attempt++) {
